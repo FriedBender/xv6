@@ -43,3 +43,7 @@ int atoi(const char*);
 int atoo(const char*);
 int strncmp(const char*, const char*, uint);
 #endif // PDX_XV6
+
+#ifdef CS333_P1
+int date(struct rtcdate*);
+#endif //CS333_P1

@@ -108,6 +108,10 @@ extern int sys_uptime(void);
 extern int sys_halt(void);
 #endif // PDX_XV6
 
+#ifdef CS333_P1
+extern int sys_date(void);
+#endif // CS333_P1
+
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
@@ -133,6 +137,9 @@ static int (*syscalls[])(void) = {
 #ifdef PDX_XV6
 [SYS_halt]    sys_halt,
 #endif // PDX_XV6
+#ifdef CS333_P1
+[SYS_date]   sys_date,
+#endif // CS333_P1
 };
 
 #ifdef PRINT_SYSCALLS
