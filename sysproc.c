@@ -97,3 +97,15 @@ sys_halt(void)
   return 0;
 }
 #endif // PDX_XV6
+
+#ifdef CS333_P1
+//get the current date
+int
+sys_date(void)
+{
+    struct rtc *d;
+
+    if(argptr(0 , (viud*)&d , sizeof(struct rtcdate)) <0)
+        return -1;
+}
+#endif // CS333_P1
