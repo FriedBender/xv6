@@ -175,7 +175,7 @@ syscall(void)
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     curproc->tf->eax = syscalls[num]();
     #ifdef PRINT_SYSCALLS
-    printf("%c -> %d\n" , syscallnames[curproc->tf->eax] , num  ); //eax is the register accumulator , num is
+    printf(syscallnames[num]);
     #endif //PRINT_SYSCALLS
   } else {
     cprintf("%d %s: unknown sys call %d\n",
