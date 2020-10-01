@@ -107,7 +107,7 @@ sys_date(void)
 
     if(argptr(0 , (void*)&d , sizeof(struct rtcdate)) <0)
         return -1;
-    cprintf("Hello");
+    cmostime(argptr(1 , *&d , sizeof(d)));
 
     return 0;
 }

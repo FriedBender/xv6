@@ -168,6 +168,9 @@ static char *syscallnames[] = {
 #ifdef PDX_XV6
   [SYS_halt]    "halt",
 #endif // PDX_XV6
+#ifdef CS333_P1
+  [SYS_date]    "date"
+#endif //CS333_P1
 };
 #endif // PRINT_SYSCALLS
 
