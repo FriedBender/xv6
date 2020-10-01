@@ -107,5 +107,8 @@ sys_date(void)
 
     if(argptr(0 , (void*)&d , sizeof(struct rtcdate)) <0)
         return -1;
+    cprintf("Hello");
+
+    return 0;
 }
 #endif // CS333_P1
