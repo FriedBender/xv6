@@ -562,9 +562,9 @@ void
 procdumpP1(struct proc *p, char *state_string)
 {
   int seconds , microseconds;
-  seconds = p->start_ticks%1000;
+  seconds = (p->start_ticks - ticks)%1000;
   microseconds = ( p->start_ticks - (seconds/1000) ) *1000;
-  cprintf("%d \t %s \t %d.%d \t %s\n", p->pid , p->name , seconds , microseconds , p->state);
+  cprintf("%d \t %s \t %d.%d \t %s\n", p->pid , p->name , seconds , microseconds , states[p->state]);
   return;
 }
 #endif
