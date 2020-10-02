@@ -103,18 +103,13 @@ sys_halt(void)
 int
 sys_date(void)
 {
-    struct rtc *d;
+    struct rtcdate *d;
 
     if(argptr(0 , (void*)&d , sizeof(struct rtcdate)) <0)
         return -1;
-    char *ptr_to_user_prog;
-    if(argptr(23 , &ptr_to_user_prog , 1))
-        cprintf("success\n");
 
-    cprintf("%p , and also a failure" , *ptr_to_user_prog);
-
-    cmostime(*ptr_to_user_prog);
-
+    cmostime(d);
+    
     return 0;
 }
 #endif // CS333_P1
