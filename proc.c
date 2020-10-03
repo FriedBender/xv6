@@ -561,10 +561,12 @@ procdumpP2P3P4(struct proc *p, char *state_string)
 void
 procdumpP1(struct proc *p, char *state_string)
 {
-  int seconds , microseconds;
-  seconds = (p->start_ticks - ticks)%1000;
-  microseconds = ( p->start_ticks - (seconds/1000) ) *1000;
-  cprintf("%d \t %s \t %d.%d \t %s\n", p->pid , p->name , seconds , microseconds , states[p->state]);
+  uint elapsed = ticks - p->start_ticks;
+  uint milliseconds = elapsed%1000;
+  uint seconds = (elapsed/1000)%60;
+
+  cprintf("%d\t%s\t\t%d.%d\t%s\t%d\t",
+          p->pid , p->name , seconds , milliseconds , states[p->state], p->sz);
   return;
 }
 #endif
