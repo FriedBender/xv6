@@ -113,3 +113,40 @@ sys_date(void)
     return 0;
 }
 #endif // CS333_P1
+
+#ifdef CS333_P2
+// UID of the current process
+uint
+getuid(void)
+{
+
+}
+
+// GID of the current process
+uint
+getpid(void)
+{
+
+}
+
+// process ID of the parent process
+uint
+getppid(void)
+{
+
+}
+
+// set UID
+int
+setuid(uint)
+{
+
+}
+
+// set GID
+int
+setgid(uint)
+{
+
+}
+#endif	//CS333_P2
