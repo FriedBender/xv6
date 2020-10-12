@@ -560,7 +560,18 @@ kill(int pid)
 void
 procdumpP2P3P4(struct proc *p, char *state_string)
 {
-  cprintf("TODO for Project 2, delete this line and implement procdumpP2P3P4() in proc.c to print a row\n");
+  uint elapsed = ticks - p->start_ticks;
+  uint milliseconds = elapsed%1000;
+  uint seconds = (elapsed/1000)%60;
+  int ppid;
+  if(p->parent == NULL)
+    ppid = p->pid;
+  else
+    ppid = p->parent->pid;
+  
+  cprintf("%d\t%s\t\t%d\t%d\t%d\t%d.%d\t%s\t%d",
+  	  p->pid, p->name, p->uid, p->gid, ppid,
+	  seconds , milliseconds , states[p->state], p->sz);
   return;
 }
 #elif defined(CS333_P1)

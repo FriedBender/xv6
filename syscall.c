@@ -153,7 +153,7 @@ static int (*syscalls[])(void) = {
 [SYS_getgid]	sys_getgid,
 [SYS_getppid]	sys_getppid,
 [SYS_setuid]	sys_setuid,
-[SYS_getgid]	sys_setgid,
+[SYS_getgid]	sys_setgid
 #endif	//CS333_P2
 };
 
