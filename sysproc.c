@@ -144,7 +144,7 @@ sys_setuid(void)
 {
 	int uid;
 	argint(0, &uid);
-	if(uid >= 0 || uid <= 32767)
+	if(uid <= 0 || uid >= 32767)
 		return -1;
 	return myproc()->uid = uid;
 }
