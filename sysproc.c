@@ -133,6 +133,7 @@ sys_getgid(void)
 uint
 sys_getppid(void)
 {
+	//TODO: if the PPID is NULL, then PPID=PID
 	return 0;
 }
 
@@ -140,6 +141,7 @@ sys_getppid(void)
 int
 sys_setuid(void)
 {
+	//TODO: Make sure values are correct: 0<= x <= 32767
 	return 0;
 }
 
@@ -147,6 +149,7 @@ sys_setuid(void)
 int
 sys_setgid(void)
 {
+	//TODO: Make sure values are correct: 0<= x <= 32767
 	return 0;
 }
 #endif	//CS333_P2

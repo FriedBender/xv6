@@ -234,6 +234,11 @@ fork(void)
   np->parent = curproc;
   *np->tf = *curproc->tf;
 
+  #ifdef CS333_P2
+  np->uid = curproc->uid;
+  np->gid = curproc->gid;
+  #endif	//CS333_P2
+
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
 
@@ -245,6 +250,7 @@ fork(void)
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
   pid = np->pid;
+
 
   acquire(&ptable.lock);
   np->state = RUNNABLE;
