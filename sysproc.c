@@ -117,36 +117,36 @@ sys_date(void)
 #ifdef CS333_P2
 // UID of the current process
 uint
-getuid(void)
+sys_getuid(void)
 {
-
+	return 0;
 }
 
 // GID of the current process
 uint
-getpid(void)
+sys_getgid(void)
 {
-
+	return 0;
 }
 
 // process ID of the parent process
 uint
-getppid(void)
+sys_getppid(void)
 {
-
+	return 0;
 }
 
 // set UID
 int
-setuid(uint)
+sys_setuid(void)
 {
-
+	return 0;
 }
 
 // set GID
 int
-setgid(uint)
+sys_setgid(void)
 {
-
+	return 0;
 }
 #endif	//CS333_P2

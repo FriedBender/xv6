@@ -116,8 +116,8 @@ extern int sys_date(void);
 extern int sys_getuid(void);
 extern int sys_getgid(void);
 extern int sys_getppid(void);
-extern int sys_setuid(uint);
-extern int sys_setgid(uint);
+extern int sys_setuid(void);
+extern int sys_setgid(void);
 #endif	//CS333_P2
 
 static int (*syscalls[])(void) = {
