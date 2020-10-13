@@ -119,44 +119,44 @@ sys_date(void)
 uint
 sys_getuid(void)
 {
-	return myproc()->uid;
+  return myproc()->uid;
 }
 
 // GID of the current process
 uint
 sys_getgid(void)
 {
-	return myproc()->gid;
+  return myproc()->gid;
 }
 
 // process ID of the parent process
 uint
 sys_getppid(void)
 {
-	if(myproc()->parent == NULL)
-		return myproc()->pid;
-	return myproc()->parent->pid;
+  if(myproc()->parent == NULL)
+    return myproc()->pid;
+  return myproc()->parent->pid;
 }
 
 // set UID
 int
 sys_setuid(void)
 {
-	int uid;
-	argint(0, &uid);
-	if(uid <= 0 || uid >= 32767)
-		return -1;
-	return myproc()->uid = uid;
+  int uid;
+  argint(0, &uid);
+  if(uid <= 0 || uid >= 32767)
+    return -1;
+  return myproc()->uid = uid;
 }
 
 // set GID
 int
 sys_setgid(void)
 {
-	int gid;
-	argint(0, &gid);
-	if(gid <= 0 || gid >= 32767)
-		return -1;
-	return myproc()->gid = gid;
+ int gid;
+ argint(0, &gid);
+ if(gid <= 0 || gid >= 32767)
+    return -1;
+ return myproc()->gid = gid;
 }
 #endif	//CS333_P2
