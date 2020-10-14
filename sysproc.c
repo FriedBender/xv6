@@ -143,7 +143,8 @@ int
 sys_setuid(void)
 {
   int uid;
-  argint(0, &uid);
+  if(argint(0, &uid)<0)
+    return -1;
   if(uid <= 0 || uid >= 32767)
     return -1;
   return myproc()->uid = uid;
@@ -154,7 +155,8 @@ int
 sys_setgid(void)
 {
  int gid;
- argint(0, &gid);
+ if(argint(0, &gid)<0)
+   return -1;
  if(gid <= 0 || gid >= 32767)
     return -1;
  return myproc()->gid = gid;

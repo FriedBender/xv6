@@ -11,8 +11,8 @@
 #define RETURN_SUCCESS 0
 #define RETURN_FAILURE -1
 
-#define UID 42
-#define GID 43
+#define UID 1
+#define GID 1
 
 #define NUL 0
 #ifndef NULL
