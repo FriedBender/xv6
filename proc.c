@@ -395,12 +395,11 @@ scheduler(void)
       idle = 0;  // not idle this timeslice
 #endif // PDX_XV6
       c->proc = p;
-      uint start = ticks;
       switchuvm(p);
       p->state = RUNNING;
+      p->cpu_ticks_in = ticks;
       swtch(&(c->scheduler), p->context);
       switchkvm();
-      p->cpu_ticks_in = ticks - start;
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
@@ -439,7 +438,7 @@ sched(void)
   if(readeflags()&FL_IF)
     panic("sched interruptible");
   intena = mycpu()->intena;
-  p->cpu_ticks_total+=p->cpu_ticks_in;
+  p->cpu_ticks_total += p->cpu_ticks_in;
   swtch(&p->context, mycpu()->scheduler);
   mycpu()->intena = intena;
 }
@@ -567,22 +566,43 @@ kill(int pid)
 void
 procdumpP2P3P4(struct proc *p, char *state_string)
 {
+  uint ppid;
   uint elapsed = ticks - p->start_ticks;
   uint milliseconds = elapsed%1000;
   uint seconds = (elapsed/1000)%60;
-  
   uint cpu_milliseconds = p->cpu_ticks_total%1000;
   uint cpu_seconds = (p->cpu_ticks_total%1000)%60;
-
-  int ppid;
+  
   if(p->parent == NULL)
     ppid = p->pid;
   else
     ppid = p->parent->pid;
   
-  cprintf("%d\t%s\t\t%d\t%d\t%d\t%d.%d\t%d.%d\t%s\t%d\t",
-  	  p->pid, p->name, p->uid, p->gid, ppid,
-	  seconds , milliseconds , cpu_seconds, cpu_milliseconds, states[p->state], p->sz);
+  cprintf("%d\t%s\t" , p->pid, p->name);
+  if(strlen(p->name) < 7)
+    cprintf("\t");
+  
+  cprintf("%d\t%d\t%d\t%d", p->uid, p->gid, ppid, seconds);
+  if(milliseconds >= 100)
+    cprintf(".%d\t", milliseconds);
+  else if(milliseconds < 100 || milliseconds >= 10)
+    cprintf(".%d0\t", milliseconds);
+  else if(milliseconds < 10)
+    cprintf(".%d00\t", milliseconds);
+
+  cprintf("%d", cpu_seconds);
+  if(cpu_milliseconds >= 100)
+    cprintf(".%d\t", cpu_milliseconds);
+  else if(cpu_milliseconds < 100 || cpu_milliseconds >= 10)
+    cprintf(".%d0\t", cpu_milliseconds);
+  else if(cpu_milliseconds < 10)
+    cprintf(".%d00\t", cpu_milliseconds);
+  
+  cprintf("%s\t%d\t", states[p->state], p->sz);
+  
+
+
+
   return;
 }
 #elif defined(CS333_P1)
