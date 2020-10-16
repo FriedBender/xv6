@@ -438,7 +438,7 @@ sched(void)
   if(readeflags()&FL_IF)
     panic("sched interruptible");
   intena = mycpu()->intena;
-  p->cpu_ticks_total += p->cpu_ticks_in;
+  p->cpu_ticks_total += (ticks-p->cpu_ticks_in);
   swtch(&p->context, mycpu()->scheduler);
   mycpu()->intena = intena;
 }
@@ -570,8 +570,9 @@ procdumpP2P3P4(struct proc *p, char *state_string)
   uint elapsed = ticks - p->start_ticks;
   uint milliseconds = elapsed%1000;
   uint seconds = (elapsed/1000)%60;
+  
   uint cpu_milliseconds = p->cpu_ticks_total%1000;
-  uint cpu_seconds = (p->cpu_ticks_total%1000)%60;
+  uint cpu_seconds = p->cpu_ticks_total/1000;
   
   if(p->parent == NULL)
     ppid = p->pid;
