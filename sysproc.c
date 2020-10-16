@@ -161,4 +161,11 @@ sys_setgid(void)
     return -1;
  return myproc()->gid = gid;
 }
+//For PS system call
+int
+sys_getprocs(void)
+{
+  return 0;
+}
+
 #endif	//CS333_P2
