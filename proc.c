@@ -600,9 +600,6 @@ procdumpP2P3P4(struct proc *p, char *state_string)
     cprintf(".%d00\t", cpu_milliseconds);
   
   cprintf("%s\t%d\t", states[p->state], p->sz);
-  
-
-
 
   return;
 }
@@ -935,3 +932,24 @@ printReadyLists()
 
 #endif // CS333_P4
 
+
+
+#ifdef CS333_P2
+int
+getprocs(struct uproc*userprocs, uint proccesses)
+{
+  struct proc *k;
+  uint procs_copied;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    userprocs->pid = k-pid;
+    safestrcpy(userprocs->name , k->name , sizeof(k->name)+1);
+    userprocs->uid = k->uid;
+    userprocs->gid = k->gid;
+    if(userprocs->pid == 1
+    
+  }
+  return procs_copied; 
+}
+#endif  //CS333_P2

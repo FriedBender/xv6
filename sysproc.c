@@ -165,7 +165,10 @@ sys_setgid(void)
 int
 sys_getprocs(void)
 {
-  return 0;
+  //TODO: Write a helper function in proc.c to get the info required.
+  struct uproc*userlevelcopies;
+  uint proccesses;
+  return getprocs(userlevelcopies, processes);
 }
 
 #endif	//CS333_P2
