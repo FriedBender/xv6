@@ -155,7 +155,7 @@ static int (*syscalls[])(void) = {
 [SYS_getppid]	sys_getppid,
 [SYS_setuid]	sys_setuid,
 [SYS_setgid]	sys_setgid,
-[SYS_getprocs]  sys_getprocs
+[SYS_getprocs]  sys_getprocs,
 #endif	//CS333_P2
 };
 
@@ -194,7 +194,7 @@ static char *syscallnames[] = {
   [SYS_getppid]	"getppid",
   [SYS_setuid]	"setuid",
   [SYS_setgid]	"setgid",
-  [SYS_getprocs]"getprocs"
+  [SYS_getprocs]"getprocs",
 #endif	//CS333_P2
 };
 #endif // PRINT_SYSCALLS

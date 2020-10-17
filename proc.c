@@ -6,6 +6,9 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#ifdef CS333_P2
+#include "uproc.h"
+#endif //CS333_P2
 
 static char *states[] = {
 [UNUSED]    "unused",
@@ -936,20 +939,34 @@ printReadyLists()
 
 #ifdef CS333_P2
 int
-getprocs(struct uproc*userprocs, uint proccesses)
+getprocs(uint max, struct uproc* table)
 {
-  struct proc *k;
-  uint procs_copied;
+  uint procs_copied = 0;
+  struct proc *p;
   acquire(&ptable.lock);
+
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
-    userprocs->pid = k-pid;
-    safestrcpy(userprocs->name , k->name , sizeof(k->name)+1);
-    userprocs->uid = k->uid;
-    userprocs->gid = k->gid;
-    if(userprocs->pid == 1
-    
+    if(p->state != UNUSED || p->state != EMBRYO)
+    {
+      table->pid = p->pid;
+      table->uid = p->uid;
+      table->gid = p->gid;
+      if(p->parent == NULL)
+        table->ppid = p->pid;
+      else
+        table->ppid = p->parent->pid; 
+      table->elapsed_ticks = ticks - p->start_ticks;
+      table->CPU_total_ticks = p->cpu_ticks_total;
+      safestrcpy(table->state , states[p->state] , sizeof(p->state)/sizeof(char));
+      table->size = p->sz;
+      safestrcpy(table->name , p->name , sizeof(p->name)+1);
+
+      ++table;
+      ++procs_copied;
+    }
   }
+  release(&ptable.lock);
   return procs_copied; 
 }
 #endif  //CS333_P2

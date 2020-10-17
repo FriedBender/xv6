@@ -9,6 +9,9 @@
 #ifdef PDX_XV6
 #include "pdx-kernel.h"
 #endif // PDX_XV6
+#ifdef CS333_P2
+#include "uproc.h"
+#endif  //CS333_P2
 
 int
 sys_fork(void)
@@ -161,14 +164,17 @@ sys_setgid(void)
     return -1;
  return myproc()->gid = gid;
 }
+
 //For PS system call
 int
 sys_getprocs(void)
 {
-  //TODO: Write a helper function in proc.c to get the info required.
-  struct uproc*userlevelcopies;
-  uint proccesses;
-  return getprocs(userlevelcopies, processes);
+  int max;
+  struct uproc* table;
+  if(argint(0 , &max) < 0)
+    return -1;
+  if(argptr(1 , (void*)&table , sizeof(*table)) <0)
+    return -1;
+  return getprocs( max , table);
 }
-
 #endif	//CS333_P2
