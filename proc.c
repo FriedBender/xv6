@@ -958,9 +958,9 @@ getstheprocs(uint max, struct uproc* table)
         table->ppid = p->parent->pid; 
       table->elapsed_ticks = ticks - p->start_ticks;
       table->CPU_total_ticks = p->cpu_ticks_total;
-      safestrcpy(table->state , states[p->state] , sizeof(p->state)/sizeof(char));
+      safestrcpy(table->state, states[p->state], sizeof(p->state)/sizeof(char));
       table->size = p->sz;
-      safestrcpy(table->name , p->name , sizeof(p->name)+1);
+      safestrcpy(table->name, p->name, sizeof(p->name)+1);
 
       ++table;
       ++procs_copied;
