@@ -9,6 +9,7 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct uproc;
 
 // bio.c
 void            binit(void);
@@ -164,6 +165,7 @@ int             argstr(int, char**);
 int             fetchint(uint, int*);
 int             fetchstr(uint, char**);
 void            syscall(void);
+int             getstheprocs(uint max, struct uproc* table);
 
 // timer.c
 void            timerinit(void);

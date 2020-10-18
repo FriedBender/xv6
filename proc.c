@@ -939,15 +939,15 @@ printReadyLists()
 
 #ifdef CS333_P2
 int
-getprocs(uint max, struct uproc* table)
+getstheprocs(uint max, struct uproc* table)
 {
   uint procs_copied = 0;
   struct proc *p;
   acquire(&ptable.lock);
 
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  for(p = ptable.proc; p < &ptable.proc[NPROC] && procs_copied < max; p++)
   {
-    if(p->state != UNUSED || p->state != EMBRYO)
+    if(p->state != UNUSED && p->state != EMBRYO)
     {
       table->pid = p->pid;
       table->uid = p->uid;

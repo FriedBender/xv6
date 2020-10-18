@@ -175,6 +175,6 @@ sys_getprocs(void)
     return -1;
   if(argptr(1 , (void*)&table , sizeof(*table)) <0)
     return -1;
-  return getprocs( max , table);
+  return getstheprocs( max , table);
 }
 #endif	//CS333_P2
