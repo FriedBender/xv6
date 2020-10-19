@@ -150,7 +150,8 @@ sys_setuid(void)
     return -1;
   if(uid < 0 || uid > 32767)
     return -1;
-  return myproc()->uid = uid;
+  myproc()->uid = uid;
+  return 0;
 }
 
 // set GID
@@ -162,7 +163,8 @@ sys_setgid(void)
     return -1;
  if(gid < 0 || gid > 32767)
     return -1;
- return myproc()->gid = gid;
+  myproc()->gid = gid;
+  return 0;
 }
 
 //For PS system call
