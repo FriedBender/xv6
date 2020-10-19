@@ -6,6 +6,7 @@
 int
 main(int argc, char* argv[])
 {
+  static int MAXNAME = 7;
   int max = atoi(argv[1]);
   if(max == NULL)
     max = NPROC;
@@ -17,9 +18,21 @@ main(int argc, char* argv[])
   printf(1,"\nPID\tName\tUID\tGID\tPPID\tElapsed\tCPU\tState\tSize\t\n");
   for(int i = 0 ; i < active_processes ; ++i)
   {
-    printf(1,"%d\t%s         %d\t%d\t%d\t%d.%d\t%d.%d\t%s\t%d\t\n",
-            table[i].pid, 
-            table[i].name,
+    int j = 0;
+    printf(1,"%d\t", table[i].pid);
+    int len = strlen(table[i].name);
+    if(len > MAXNAME)
+    {
+      table[i].name[MAXNAME] = '\0';
+      len = MAXNAME;
+    }
+    printf(1,"%s", table[i].name);
+    for(j=len; j<=MAXNAME; j++)
+    {
+      printf(1, " ");
+    }
+
+    printf(1,"%d\t%d\t%d\t%d.%d\t%d.%d\t%s\t%d\t\n",
             table[i].uid, 
             table[i].gid,
             table[i].ppid, 
