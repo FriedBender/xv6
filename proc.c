@@ -944,25 +944,26 @@ getstheprocs(uint max, struct uproc* table)
   uint procs_copied = 0;
   struct proc *p;
   acquire(&ptable.lock);
-
-  for(p = ptable.proc; p < &ptable.proc[NPROC] && procs_copied < max; p++)
+  if(max < 0)
+    return -1;
+  
+  for(p = ptable.proc; p != &ptable.proc[NPROC] && procs_copied < max; ++p)
   {
     if(p->state != UNUSED && p->state != EMBRYO)
     {
-      table->pid = p->pid;
-      table->uid = p->uid;
-      table->gid = p->gid;
+      table[procs_copied].pid = p->pid;
+      table[procs_copied].uid = p->uid;
+      table[procs_copied].gid = p->gid;
       if(p->parent == NULL)
-        table->ppid = p->pid;
+        table[procs_copied].ppid = p->pid;
       else
-        table->ppid = p->parent->pid; 
-      table->elapsed_ticks = ticks - p->start_ticks;
-      table->CPU_total_ticks = p->cpu_ticks_total;
-      safestrcpy(table->state, states[p->state], STRMAX);
-      table->size = p->sz;
-      safestrcpy(table->name, p->name, sizeof(p->name)+1);
+      table[procs_copied].ppid = p->parent->pid; 
+      table[procs_copied].elapsed_ticks = ticks - p->start_ticks;
+      table[procs_copied].CPU_total_ticks = p->cpu_ticks_total;
+      safestrcpy(table[procs_copied].state, states[p->state], sizeof(p->state));
+      table[procs_copied].size = p->sz;
+      safestrcpy(table[procs_copied].name, p->name, sizeof(p->name));
 
-      ++table;
       ++procs_copied;
     }
   }
