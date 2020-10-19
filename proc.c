@@ -569,6 +569,8 @@ kill(int pid)
 void
 procdumpP2P3P4(struct proc *p, char *state_string)
 {
+  int i;
+  static int MAXNAME = 12;
   uint ppid;
   uint elapsed = ticks - p->start_ticks;
   uint milliseconds = elapsed%1000;
@@ -581,12 +583,17 @@ procdumpP2P3P4(struct proc *p, char *state_string)
     ppid = p->pid;
   else
     ppid = p->parent->pid;
+  int len = strlen(p->name);
+  if(len>MAXNAME)
+  {
+    p->name[MAXNAME] = '\0';
+    len = MAXNAME;
+  }
+  cprintf("%d\t%s", p->pid, p->name);
+  for(i = len; i<=MAXNAME; i++)
+    cprintf(" ");
   
-  cprintf("%d\t%s\t" , p->pid, p->name);
-  if(strlen(p->name) < 7)
-    cprintf("\t");
-  
-  cprintf("%d\t%d\t%d\t%d", p->uid, p->gid, ppid, seconds);
+  cprintf("%d\t\t%d\t%d\t%d", p->uid, p->gid, ppid, seconds);
   if(milliseconds >= 100)
     cprintf(".%d\t", milliseconds);
   else if(milliseconds < 100 || milliseconds >= 10)
@@ -960,7 +967,7 @@ getstheprocs(uint max, struct uproc* table)
       table[procs_copied].ppid = p->parent->pid; 
       table[procs_copied].elapsed_ticks = ticks - p->start_ticks;
       table[procs_copied].CPU_total_ticks = p->cpu_ticks_total;
-      safestrcpy(table[procs_copied].state, states[p->state], sizeof(p->state));
+      safestrcpy(table[procs_copied].state, states[p->state], STRMAX);
       table[procs_copied].size = p->sz;
       safestrcpy(table[procs_copied].name, p->name, sizeof(p->name));
 
