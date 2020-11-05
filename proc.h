@@ -54,6 +54,9 @@ struct proc {
   uint cpu_ticks_in;           // Ticks when scheduled
   uint uid;                    // To keep track of the proccses user
   uint gid;                    // To keep track of the processes group
+#ifdef CS333_P3
+  struct proc *next;           //for adding a linked list in P3
+#endif	//CS333_P3
 };
 
 // Process memory is laid out contiguously, low addresses first:
