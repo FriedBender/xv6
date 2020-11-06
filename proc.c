@@ -19,7 +19,24 @@ static char *states[] = {
 [ZOMBIE]    "zombie"
 };
 
+
 #ifdef CS333_P3
+//list defined for the round robin global in scheduler
+struct StateLists{
+  struct proc* head_unused; //unused proccess
+  struct proc* tail_unused; //unused proccess
+  struct proc* head_embryo;  //embryo proccesses
+  struct proc* tail_embryo;  //embryo proccesses
+  struct proc* head_sleep; //sleeping processes
+  struct proc* tail_sleep; //sleeping processes
+  struct proc* head_runnable; //for runnable processes
+  struct proc* tail_runnable; //for runnable processes
+  struct proc* head_running; //for running processes
+  struct proc* tail_running; //for running processes
+  struct proc* head_zombie;  //for zombie processes
+  struct proc* tail_zombie;  //for zombie processes
+};
+
 #define statecount NELEM(states)
 #endif	//CS333_P3
 
@@ -50,8 +67,8 @@ static int  stateListRemove(struct ptrs*, struct proc* p);
 static void assertState(struct proc*, enum procstate, const char *, int);
 #endif // CS333_P3
 #ifdef CS333_P4
-static void printReadyLists(
-static void printReadyList(struct proc *, int)
+static void printReadyLists(  );  //what is this for P4?
+static void printReadyList(struct proc *, int); //also for P4
 #endif // CS333_P4
 
 static struct proc *initproc;
@@ -186,7 +203,7 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
-#ifdef CS333_p3
+#ifdef CS333_P3
   acquire(&ptable.lock);
   initProcessLists();
   initFreeList();
@@ -561,7 +578,10 @@ scheduler(void)
       }
       assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
       p->state = RUNNING;
-      //TODO add to RUNNING list
+      //TODO add to RUNNING list   //DONE
+      stateListAdd(&ptable.list[RUNNING], p); //void return type, ALWAYS SUCCEEDS
+      assertState(p, RUNNING, __FUNCTION__, __LINE__);  //since HAS to be running
+      
       p->cpu_ticks_in = ticks;
       swtch(&(c->scheduler), p->context);
       switchkvm();
@@ -847,7 +867,7 @@ kill(int pid)
 	// think carefully here: could there be further SLEEPING processes
 	//that we need to wake up?
 	//If we remove p from the sleeping list, what does p->next become?
-	assertState(p, SLEEPING, __FUNCTION__, LLLINE__);
+	assertState(p, SLEEPING, __FUNCTION__, __LINE__);
 	stateListAdd(&ptable.list[RUNNABLE], p);
       }
       release(&ptable.lock);
