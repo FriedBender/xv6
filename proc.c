@@ -21,22 +21,6 @@ static char *states[] = {
 
 
 #ifdef CS333_P3
-//list defined for the round robin global in scheduler
-struct StateLists{
-  struct proc* head_unused; //unused proccess
-  struct proc* tail_unused; //unused proccess
-  struct proc* head_embryo;  //embryo proccesses
-  struct proc* tail_embryo;  //embryo proccesses
-  struct proc* head_sleep; //sleeping processes
-  struct proc* tail_sleep; //sleeping processes
-  struct proc* head_runnable; //for runnable processes
-  struct proc* tail_runnable; //for runnable processes
-  struct proc* head_running; //for running processes
-  struct proc* tail_running; //for running processes
-  struct proc* head_zombie;  //for zombie processes
-  struct proc* tail_zombie;  //for zombie processes
-};
-
 #define statecount NELEM(states)
 #endif	//CS333_P3
 
@@ -147,7 +131,11 @@ allocproc(void)
     return 0;
   }
 #ifdef CS333_P3
-  //TODO remove from UNUSED LIST
+  //TODO remove from UNUSED LIST  //DONE
+  if(stateListRemove(&ptable.list[UNUSED], p) == -1)
+  {
+    	panic("Failed to remove from UNUSED list after kernel stack allocation failure in allocproc()");
+  }
   assertState(p, UNUSED, __FUNCTION__, __LINE__);
 #endif
   p->state = EMBRYO;
@@ -168,7 +156,9 @@ allocproc(void)
 #endif
     p->state = UNUSED;
 #ifdef CS333_P3
-    //TODO add to UNUSED LIST
+    //TODO add to UNUSED LIST //DONE
+    stateListAdd(&ptable.list[UNUSED], p);
+    
 #endif
     return 0;
   }
