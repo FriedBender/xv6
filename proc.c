@@ -548,37 +548,45 @@ scheduler(void)
 #ifdef PDX_XV6
     idle = 1;  // assume idle unless we schedule a process
 #endif // PDX_XV6
+
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+    for(int i = 0; i < NPROC; ++i){
+        p = ptable.list[RUNNABLE].head;   //points to head,
+                                          //or first proc in the list
+                                          //as it follow FIFO
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-#ifdef PDX_XV6
-      idle = 0;  // not idle this timeslice
-#endif // PDX_XV6
-      c->proc = p;
-      switchuvm(p);
-      if(stateListRemove(&ptable.list[RUNNABLE], p) == -1)
-      {
-        panic("Failed to remove process we will run from RUNNABLE in scheduler()");
-      }
-      assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
-      p->state = RUNNING;
-      //TODO add to RUNNING list   //DONE
-      stateListAdd(&ptable.list[RUNNING], p); //void return type, ALWAYS SUCCEEDS
-      assertState(p, RUNNING, __FUNCTION__, __LINE__);  //since HAS to be running
+        //check for a valid process
+        if(p){
+          //to make sure it is a runnable proc, else fail
+          assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
+
+          #ifdef PDX_XV6
+          idle = 0;  // not idle this timeslice
+          #endif // PDX_XV6
+          c->proc = p;
+          switchuvm(p);
+
+          //remove from the RUNNABLE list
+          if(stateListRemove(&ptable.list[RUNNABLE], p) == -1)
+          {
+            panic("Failed to remove process we will run from RUNNABLE in scheduler()");
+          }
+          assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
+
+          //and add to the RUNNING list
+          p->state = RUNNING;
+          stateListAdd(&ptable.list[RUNNING], p); //void return type, ALWAYS SUCCEEDS
+          assertState(p, RUNNING, __FUNCTION__, __LINE__);  //since HAS to be running
       
-      p->cpu_ticks_in = ticks;
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
+          p->cpu_ticks_in = ticks;
+          swtch(&(c->scheduler), p->context);
+          switchkvm();
 
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+          // Process is done running for now.
+          // It should have changed its p->state before coming back.
+          c->proc = 0;
+      }
     }
     release(&ptable.lock);
 #ifdef PDX_XV6
