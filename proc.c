@@ -121,7 +121,7 @@ allocproc(void)
 
   acquire(&ptable.lock);
   int found = 0;
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  for(p = ptable.list[UNUSED].head; p != ptable.list[UNUSED].tail; p = p->next)
     if(p->state == UNUSED) {
       found = 1;
       break;
@@ -131,12 +131,9 @@ allocproc(void)
     return 0;
   }
 #ifdef CS333_P3
-  //TODO remove from UNUSED LIST  //DONE
-  if(stateListRemove(&ptable.list[UNUSED], p) == -1)
-  {
-    	panic("Failed to remove from UNUSED list after kernel stack allocation failure in allocproc()");
-  }
   assertState(p, UNUSED, __FUNCTION__, __LINE__);
+  if(stateListRemove(&ptable.list[UNUSED], p) == -1)
+    	panic("\nFailed to remove from UNUSED list after kernel stack allocation failure in allocproc()\n");
 #endif
   p->state = EMBRYO;
 #ifdef CS333_P3
@@ -150,13 +147,12 @@ allocproc(void)
 #ifdef CS333_P3
     if(stateListRemove(&ptable.list[EMBRYO], p) == -1)
     {
-    	panic("Failed to remove from EMBRYO list after kernel stack allocation failure in allocproc()");
+    	panic("\nFailed to remove from EMBRYO list after kernel stack allocation failure in allocproc()\n");
     }
     assertState(p, EMBRYO, __FUNCTION__, __LINE__);
 #endif
     p->state = UNUSED;
 #ifdef CS333_P3
-    //TODO add to UNUSED LIST //DONE
     stateListAdd(&ptable.list[UNUSED], p);
     
 #endif
@@ -228,7 +224,7 @@ userinit(void)
 #ifdef CS333_P3
   if(stateListRemove(&ptable.list[EMBRYO], p) == -1)
   {
-    panic("Failed to remove from EMBRYO list after sccessful allocation in userinit()");
+    panic("\nFailed to remove from EMBRYO list after sccessful allocation in userinit()\n");
   }
   assertState(p, EMBRYO, __FUNCTION__, __LINE__);
 #endif
@@ -284,13 +280,14 @@ fork(void)
     acquire(&ptable.lock);
     if(stateListRemove(&ptable.list[EMBRYO], np) == -1)
     {
-      panic("Failed to remove from EMBYO list in fork() after page directory allocation failure");
+      panic("Failed to remove from EMBYO list in fkrk() after page directory allocation failure");
     }
     assertState(np, EMBRYO, __FUNCTION__, __LINE__);
 #endif
     np->state = UNUSED;
 #ifdef CS333_P3
   //TODO add to UNUSED list
+
 #endif
     release(&ptable.lock);
     return -1;
@@ -551,14 +548,13 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(int i = 0; i < NPROC; ++i){
         p = ptable.list[RUNNABLE].head;   //points to head,
                                           //or first proc in the list
                                           //as it follow FIFO
-
         //check for a valid process
         if(p){
           //to make sure it is a runnable proc, else fail
+          //TODO: A kernel panic occurs because p is NOT RUNNABLE
           assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
 
           #ifdef PDX_XV6
@@ -569,9 +565,7 @@ scheduler(void)
 
           //remove from the RUNNABLE list
           if(stateListRemove(&ptable.list[RUNNABLE], p) == -1)
-          {
-            panic("Failed to remove process we will run from RUNNABLE in scheduler()");
-          }
+            panic("\nFailed to remove process we will run from RUNNABLE in scheduler()\n");
           assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
 
           //and add to the RUNNING list
@@ -587,7 +581,6 @@ scheduler(void)
           // It should have changed its p->state before coming back.
           c->proc = 0;
       }
-    }
     release(&ptable.lock);
 #ifdef PDX_XV6
     // if idle, wait for next interrupt
