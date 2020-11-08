@@ -552,15 +552,15 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     p = ptable.list[RUNNABLE].head;   //points to head,
-    //or first proc in the list
-    //as it follow FIFO
-    //check for a valid process
+                                      //or first proc in the list
+                                      //as it follow FIFO
+                                      //check for a valid process
     if(p){
       assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
 
-#ifdef PDX_XV6
+      #ifdef PDX_XV6
       idle = 0;  // not idle this timeslice
-#endif // PDX_XV6
+      #endif // PDX_XV6
       c->proc = p;
       switchuvm(p);
 
