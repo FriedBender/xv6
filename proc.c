@@ -131,9 +131,9 @@ allocproc(void)
     return 0;
   }
 #ifdef CS333_P3
-  assertState(p, UNUSED, __FUNCTION__, __LINE__);
   if(stateListRemove(&ptable.list[UNUSED], p) == -1)
     	panic("\nFailed to remove from UNUSED list after kernel stack allocation failure in allocproc()\n");
+  assertState(p, UNUSED, __FUNCTION__, __LINE__);
 #endif
   p->state = EMBRYO;
 #ifdef CS333_P3
@@ -146,15 +146,13 @@ allocproc(void)
   if((p->kstack = kalloc()) == 0){
 #ifdef CS333_P3
     if(stateListRemove(&ptable.list[EMBRYO], p) == -1)
-    {
     	panic("\nFailed to remove from EMBRYO list after kernel stack allocation failure in allocproc()\n");
-    }
     assertState(p, EMBRYO, __FUNCTION__, __LINE__);
 #endif
     p->state = UNUSED;
 #ifdef CS333_P3
     stateListAdd(&ptable.list[UNUSED], p);
-    
+    release(&ptable.lock);
 #endif
     return 0;
   }
@@ -195,8 +193,8 @@ userinit(void)
   initFreeList();
   release(&ptable.lock);
 #endif
-  p = allocproc();
 
+  p = allocproc();
   initproc = p;
   p->uid = UID;
   p->gid = GID;
@@ -223,9 +221,7 @@ userinit(void)
   acquire(&ptable.lock);
 #ifdef CS333_P3
   if(stateListRemove(&ptable.list[EMBRYO], p) == -1)
-  {
     panic("\nFailed to remove from EMBRYO list after sccessful allocation in userinit()\n");
-  }
   assertState(p, EMBRYO, __FUNCTION__, __LINE__);
 #endif
   p->state = RUNNABLE;
@@ -279,15 +275,12 @@ fork(void)
 #ifdef CS333_P3
     acquire(&ptable.lock);
     if(stateListRemove(&ptable.list[EMBRYO], np) == -1)
-    {
-      panic("Failed to remove from EMBYO list in fkrk() after page directory allocation failure");
-    }
+      panic("\nFailed to remove from EMBYO list in fkrk() after page directory allocation failure\n");
     assertState(np, EMBRYO, __FUNCTION__, __LINE__);
 #endif
     np->state = UNUSED;
 #ifdef CS333_P3
-  //TODO add to UNUSED list
-
+    stateListAdd(&ptable.list[UNUSED], np);
 #endif
     release(&ptable.lock);
     return -1;
@@ -295,7 +288,6 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
-
   #ifdef CS333_P2
   np->uid = curproc->uid;
   np->gid = curproc->gid;
@@ -313,13 +305,10 @@ fork(void)
 
   pid = np->pid;
 
-
   acquire(&ptable.lock);
 #ifdef CS333_P3
   if(stateListRemove(&ptable.list[EMBRYO], np) == -1)
-  {
-    panic("Failed to remove from EMBYO on succesful fork");
-  }
+    panic("\nFailed to remove from EMBYO on succesful fork\n");
   assertState(np, EMBRYO, __FUNCTION__, __LINE__);
 #endif
   np->state = RUNNABLE;
@@ -373,7 +362,9 @@ exit(void)
   }
 
   // Jump into the scheduler, never to return.
+  stateListRemove(&ptable.list[RUNNING], curproc);
   curproc->state = ZOMBIE;
+  stateListAdd(&ptable.list[ZOMBIE], curproc);
 #ifdef PDX_XV6
   curproc->sz = 0;
 #endif // PDX_XV6
@@ -458,7 +449,10 @@ wait(void)
         p->parent = 0;
         p->name[0] = 0;
         p->killed = 0;
+        stateListRemove(&ptable.list[ZOMBIE], p);
+        assertState(p, ZOMBIE, __FUNCTION__, __LINE__);
         p->state = UNUSED;
+        stateListAdd(&ptable.list[UNUSED], p);
         release(&ptable.lock);
         return pid;
       }
@@ -554,7 +548,7 @@ scheduler(void)
         //check for a valid process
         if(p){
           //to make sure it is a runnable proc, else fail
-          //TODO: A kernel panic occurs because p is NOT RUNNABLE
+          //TODO: A kernel panic occurs because p is NOT RUNNABLE WORKING ON FIXING VIA IMPLIMENTING FUNCTIONS
           assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
 
           #ifdef PDX_XV6
@@ -680,7 +674,7 @@ yield(void)
   struct proc *curproc = myproc();
 
   acquire(&ptable.lock);  //DOC: yieldlock
-  //TODO remove from RUNNING list
+  stateListRemove(&ptable.list[RUNNING], curproc);
   assertState(curproc, RUNNING, __FUNCTION__, __LINE__);
   curproc->state = RUNNABLE;
   stateListAdd(&ptable.list[RUNNABLE], curproc);
@@ -745,7 +739,14 @@ sleep(void *chan, struct spinlock *lk)
   }
   // Go to sleep.
   p->chan = chan;
+  #ifdef CS333_P3
+  stateListRemove(&ptable.list[RUNNING], p);
+  assertState(p, RUNNING, __FUNCTION__, __LINE__);
+  #endif
   p->state = SLEEPING;
+  #ifdef CS333_P3
+  stateListAdd(&ptable.list[SLEEPING], p);
+  #endif
 
   sched();
 
@@ -802,17 +803,20 @@ static void
 wakeup1(void *chan)
 {
   struct proc *p;
-
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-  {
-    if(p->state == SLEEPING && p->chan == chan)
+  struct proc *next;
+  p = ptable.list[SLEEPING].head;
+  while(p){
+    next = p->next; //get the next process in the list, to work with p.
+    if(p->chan == chan) //make sure p is in the same channel
     {
       //TODO remove from SLEEPING. What if there are multiple SLEEPING processes
       //we want to wake up?
+      stateListRemove(&ptable.list[SLEEPING], p);
       assertState(p, SLEEPING, __FUNCTION__, __LINE__);
       p->state = RUNNABLE;
       stateListAdd(&ptable.list[RUNNABLE], p);
     }
+    p = next; //go to the next process
   }
 }
 #else	//CS333_P1,P2
@@ -853,13 +857,14 @@ kill(int pid)
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
       {
-        //TODO remove from SLEEPING list
+        //TODO remove from SLEEPING list  //DONE
+        stateListRemove(&ptable.list[SLEEPING], p);
+        assertState(p, SLEEPING, __FUNCTION__, __LINE__);
         p->state = RUNNABLE;
-	// think carefully here: could there be further SLEEPING processes
-	//that we need to wake up?
-	//If we remove p from the sleeping list, what does p->next become?
-	assertState(p, SLEEPING, __FUNCTION__, __LINE__);
-	stateListAdd(&ptable.list[RUNNABLE], p);
+	      // think carefully here: could there be further SLEEPING processes
+	      //that we need to wake up?
+	      //If we remove p from the sleeping list, what does p->next become?
+	      stateListAdd(&ptable.list[RUNNABLE], p);
       }
       release(&ptable.lock);
       return 0;
