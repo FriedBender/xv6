@@ -11,12 +11,12 @@
 #endif //CS333_P2
 
 static char *states[] = {
-[UNUSED]    "unused",
-[EMBRYO]    "embryo",
-[SLEEPING]  "sleep ",
-[RUNNABLE]  "runble",
-[RUNNING]   "run   ",
-[ZOMBIE]    "zombie"
+  [UNUSED]    "unused",
+  [EMBRYO]    "embryo",
+  [SLEEPING]  "sleep ",
+  [RUNNABLE]  "runble",
+  [RUNNING]   "run   ",
+  [ZOMBIE]    "zombie"
 };
 
 
@@ -29,16 +29,16 @@ static char *states[] = {
 // and end of a linked list of struct procs.  use with stateListAdd() and
 // stateListRemove().
 struct ptrs {
-struct proc* head;
-struct proc* tail;
+  struct proc* head;
+  struct proc* tail;
 };
 #endif
 
 static struct {
-struct spinlock lock;
-struct proc proc[NPROC];
+  struct spinlock lock;
+  struct proc proc[NPROC];
 #ifdef CS333_P3
-struct ptrs list[statecount];
+  struct ptrs list[statecount];
 #endif
 } ptable;
 
@@ -62,50 +62,50 @@ extern void forkret(void);
 extern void trapret(void);
 static void wakeup1(void* chan);
 
-void
+  void
 pinit(void)
 {
-initlock(&ptable.lock, "ptable");
+  initlock(&ptable.lock, "ptable");
 }
 
 // Must be called with interrupts disabled
 int
 cpuid() {
-return mycpu()-cpus;
+  return mycpu()-cpus;
 }
 
 // Must be called with interrupts disabled to avoid the caller being
 // rescheduled between reading lapicid and running through the loop.
-struct cpu*
+  struct cpu*
 mycpu(void)
 {
-int apicid, i;
+  int apicid, i;
 
-if(readeflags()&FL_IF)
-panic("mycpu called with interrupts enabled\n");
+  if(readeflags()&FL_IF)
+    panic("mycpu called with interrupts enabled\n");
 
-apicid = lapicid();
-// APIC IDs are not guaranteed to be contiguous. Maybe we should have
-// a reverse map, or reserve a register to store &cpus[i].
-for (i = 0; i < ncpu; ++i) {
-if (cpus[i].apicid == apicid) {
-  return &cpus[i];
-}
-}
-panic("unknown apicid\n");
+  apicid = lapicid();
+  // APIC IDs are not guaranteed to be contiguous. Maybe we should have
+  // a reverse map, or reserve a register to store &cpus[i].
+  for (i = 0; i < ncpu; ++i) {
+    if (cpus[i].apicid == apicid) {
+      return &cpus[i];
+    }
+  }
+  panic("unknown apicid\n");
 }
 
 // Disable interrupts so that we are not rescheduled
 // while reading proc from the cpu structure
 struct proc*
 myproc(void) {
-struct cpu *c;
-struct proc *p;
-pushcli();
-c = mycpu();
-p = c->proc;
-popcli();
-return p;
+  struct cpu *c;
+  struct proc *p;
+  pushcli();
+  c = mycpu();
+  p = c->proc;
+  popcli();
+  return p;
 }
 
 //PAGEBREAK: 32
@@ -113,71 +113,72 @@ return p;
 // If found, change state to EMBRYO and initialize
 // state required to run in the kernel.
 // Otherwise return 0.
-static struct proc*
+  static struct proc*
 allocproc(void)
 {
-struct proc *p;
-char *sp;
+  struct proc *p;
+  char *sp;
 
-acquire(&ptable.lock);
-int found = 0;
-for(p = ptable.list[UNUSED].head; p != ptable.list[UNUSED].tail; p = p->next)
-if(p->state == UNUSED) {
-  found = 1;
-  break;
-}
-if (!found) {
-release(&ptable.lock);
-return 0;
-}
+  acquire(&ptable.lock);
+  int found = 0;
+  for(p = ptable.list[UNUSED].head; p != ptable.list[UNUSED].tail; p = p->next){
+    if(p->state == UNUSED) {
+      found = 1;
+      break;
+    }
+  }
+  if (!found) {
+    release(&ptable.lock);
+    return 0;
+  }
 #ifdef CS333_P3
-if(stateListRemove(&ptable.list[UNUSED], p) == -1)
-panic("\nFailed to remove from UNUSED list after kernel stack allocation failure in allocproc()\n");
-assertState(p, UNUSED, __FUNCTION__, __LINE__);
+  if(stateListRemove(&ptable.list[UNUSED], p) == -1)
+    panic("\nFailed to remove from UNUSED list after kernel stack allocation failure in allocproc()\n");
+  assertState(p, UNUSED, __FUNCTION__, __LINE__);
 #endif
-p->state = EMBRYO;
+  p->state = EMBRYO;
 #ifdef CS333_P3
-stateListAdd(&ptable.list[EMBRYO], p);
+  stateListAdd(&ptable.list[EMBRYO], p);
 #endif
-p->pid = nextpid++;
-release(&ptable.lock);
+  p->pid = nextpid++;
+  release(&ptable.lock);
 
-// Allocate kernel stack.
-if((p->kstack = kalloc()) == 0){
+  // Allocate kernel stack.
+  if((p->kstack = kalloc()) == 0){
 #ifdef CS333_P3
-if(stateListRemove(&ptable.list[EMBRYO], p) == -1)
-  panic("\nFailed to remove from EMBRYO list after kernel stack allocation failure in allocproc()\n");
-assertState(p, EMBRYO, __FUNCTION__, __LINE__);
+    if(stateListRemove(&ptable.list[EMBRYO], p) == -1)
+      panic("\nFailed to remove from EMBRYO list after kernel stack allocation failure in allocproc()\n");
+    assertState(p, EMBRYO, __FUNCTION__, __LINE__);
 #endif
-p->state = UNUSED;
+    p->state = UNUSED;
 #ifdef CS333_P3
-stateListAdd(&ptable.list[UNUSED], p);
-release(&ptable.lock);
+    stateListAdd(&ptable.list[UNUSED], p);
+    release(&ptable.lock);
 #endif
-return 0;
-}
-sp = p->kstack + KSTACKSIZE;
+    return 0;
+  }
+  sp = p->kstack + KSTACKSIZE;
 
-// Leave room for trap frame.
-sp -= sizeof *p->tf;
-p->tf = (struct trapframe*)sp;
+  // Leave room for trap frame.
+  sp -= sizeof *p->tf;
+  p->tf = (struct trapframe*)sp;
 
-// Set up new context to start executing at forkret,
-// which returns to trapret.
-sp -= 4;
-*(uint*)sp = (uint)trapret;
+  // Set up new context to start executing at forkret,
+  // which returns to trapret.
+  sp -= 4;
+  *(uint*)sp = (uint)trapret;
 
-sp -= sizeof *p->context;
-p->context = (struct context*)sp;
-memset(p->context, 0, sizeof *p->context);
-p->context->eip = (uint)forkret;
+  sp -= sizeof *p->context;
+  p->context = (struct context*)sp;
+  memset(p->context, 0, sizeof *p->context);
+  p->context->eip = (uint)forkret;
 
-//To initialize the start_ticks
-p->start_ticks = ticks;
-p->cpu_ticks_total = 0;
-p->cpu_ticks_in = 0;
+  //To initialize the start_ticks
+  p->start_ticks = ticks;
+  p->cpu_ticks_total = 0;
+  p->cpu_ticks_in = 0;
 
-return p;
+  return p;
 }
 
 //PAGEBREAK: 32
@@ -185,140 +186,141 @@ return p;
 void
 userinit(void)
 {
-struct proc *p;
-extern char _binary_initcode_start[], _binary_initcode_size[];
+  struct proc *p;
+  extern char _binary_initcode_start[], _binary_initcode_size[];
 #ifdef CS333_P3
-acquire(&ptable.lock);
-initProcessLists();
-initFreeList();
-release(&ptable.lock);
+  acquire(&ptable.lock);
+  initProcessLists();
+  initFreeList();
+  release(&ptable.lock);
 #endif
 
-p = allocproc();
-initproc = p;
-p->uid = UID;
-p->gid = GID;
-if((p->pgdir = setupkvm()) == 0)
-panic("userinit: out of memory?");
-inituvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
-p->sz = PGSIZE;
-memset(p->tf, 0, sizeof(*p->tf));
-p->tf->cs = (SEG_UCODE << 3) | DPL_USER;
-p->tf->ds = (SEG_UDATA << 3) | DPL_USER;
-p->tf->es = p->tf->ds;
-p->tf->ss = p->tf->ds;
-p->tf->eflags = FL_IF;
-p->tf->esp = PGSIZE;
-p->tf->eip = 0;  // beginning of initcode.S
+  p = allocproc();
+  initproc = p;
+  p->uid = UID;
+  p->gid = GID;
+  if((p->pgdir = setupkvm()) == 0)
+    panic("userinit: out of memory?");
+  inituvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
+  p->sz = PGSIZE;
+  memset(p->tf, 0, sizeof(*p->tf));
+  p->tf->cs = (SEG_UCODE << 3) | DPL_USER;
+  p->tf->ds = (SEG_UDATA << 3) | DPL_USER;
+  p->tf->es = p->tf->ds;
+  p->tf->ss = p->tf->ds;
+  p->tf->eflags = FL_IF;
+  p->tf->esp = PGSIZE;
+  p->tf->eip = 0;  // beginning of initcode.S
 
-safestrcpy(p->name, "initcode", sizeof(p->name));
-p->cwd = namei("/");
+  safestrcpy(p->name, "initcode", sizeof(p->name));
+  p->cwd = namei("/");
 
-// this assignment to p->state lets other cores
-// run this process. the acquire forces the above
-// writes to be visible, and the lock is also needed
-// because the assignment might not be atomic.
-acquire(&ptable.lock);
+  // this assignment to p->state lets other cores
+  // run this process. the acquire forces the above
+  // writes to be visible, and the lock is also needed
+  // because the assignment might not be atomic.
+  acquire(&ptable.lock);
 #ifdef CS333_P3
-if(stateListRemove(&ptable.list[EMBRYO], p) == -1)
-panic("\nFailed to remove from EMBRYO list after sccessful allocation in userinit()\n");
-assertState(p, EMBRYO, __FUNCTION__, __LINE__);
+  if(stateListRemove(&ptable.list[EMBRYO], p) == -1)
+    panic("\nFailed to remove from EMBRYO list after sccessful allocation in userinit()\n");
+  assertState(p, EMBRYO, __FUNCTION__, __LINE__);
 #endif
-p->state = RUNNABLE;
+  p->state = RUNNABLE;
 #ifdef CS333_P3
-stateListAdd(&ptable.list[RUNNABLE], p);
+  stateListAdd(&ptable.list[RUNNABLE], p);
 #endif
-release(&ptable.lock);
+  release(&ptable.lock);
 }
 
 // Grow current process's memory by n bytes.
 // Return 0 on success, -1 on failure.
-int
+  int
 growproc(int n)
 {
-uint sz;
-struct proc *curproc = myproc();
+  uint sz;
+  struct proc *curproc = myproc();
 
-sz = curproc->sz;
-if(n > 0){
-if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
-  return -1;
-} else if(n < 0){
-if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
-  return -1;
-}
-curproc->sz = sz;
-switchuvm(curproc);
-return 0;
+  sz = curproc->sz;
+  if(n > 0){
+    if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
+      return -1;
+  } else if(n < 0){
+    if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
+      return -1;
+  }
+  curproc->sz = sz;
+  switchuvm(curproc);
+  return 0;
 }
 
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
-int
+  int
 fork(void)
 {
-int i;
-uint pid;
-struct proc *np;
-struct proc *curproc = myproc();
+  int i;
+  uint pid;
+  struct proc *np;
+  struct proc *curproc = myproc();
 
-// Allocate process.
-if((np = allocproc()) == 0){
-return -1;
-}
+  // Allocate process.
+  if((np = allocproc()) == 0){
+    return -1;
+  }
 
-// Copy process state from proc.
-if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
-kfree(np->kstack);
-np->kstack = 0;
+  // Copy process state from proc.
+  if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
+    kfree(np->kstack);
+    np->kstack = 0;
 #ifdef CS333_P3
-acquire(&ptable.lock);
-if(stateListRemove(&ptable.list[EMBRYO], np) == -1)
-  panic("\nFailed to remove from EMBYO list in fkrk() after page directory allocation failure\n");
-assertState(np, EMBRYO, __FUNCTION__, __LINE__);
+    acquire(&ptable.lock);
+    if(stateListRemove(&ptable.list[EMBRYO], np) == -1)
+      panic("\nFailed to remove from EMBYO list in fkrk() after page directory allocation failure\n");
+    assertState(np, EMBRYO, __FUNCTION__, __LINE__);
 #endif
-np->state = UNUSED;
+    np->state = UNUSED;
 #ifdef CS333_P3
-stateListAdd(&ptable.list[UNUSED], np);
+    stateListAdd(&ptable.list[UNUSED], np);
 #endif
-release(&ptable.lock);
-return -1;
-}
-np->sz = curproc->sz;
-np->parent = curproc;
-*np->tf = *curproc->tf;
+    release(&ptable.lock);
+    return -1;
+  }
+  np->sz = curproc->sz;
+  np->parent = curproc;
+  *np->tf = *curproc->tf;
 #ifdef CS333_P2
-np->uid = curproc->uid;
-np->gid = curproc->gid;
-#endif	//CS333_P2
+  np->uid = curproc->uid;
+  np->gid = curproc->gid;
+#endif	//CS333_P3
 
-// Clear %eax so that fork returns 0 in the child.
-np->tf->eax = 0;
+  // Clear %eax so that fork returns 0 in the child.
+  np->tf->eax = 0;
 
-for(i = 0; i < NOFILE; i++)
-if(curproc->ofile[i])
-  np->ofile[i] = filedup(curproc->ofile[i]);
-np->cwd = idup(curproc->cwd);
+  for(i = 0; i < NOFILE; i++){
+    if(curproc->ofile[i])
+      np->ofile[i] = filedup(curproc->ofile[i]);
+  }
+  np->cwd = idup(curproc->cwd);
 
-safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+  safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
-pid = np->pid;
+  pid = np->pid;
 
-acquire(&ptable.lock);
+  acquire(&ptable.lock);
 #ifdef CS333_P3
-if(stateListRemove(&ptable.list[EMBRYO], np) == -1)
-panic("\nFailed to remove from EMBYO on succesful fork\n");
-assertState(np, EMBRYO, __FUNCTION__, __LINE__);
+  if(stateListRemove(&ptable.list[EMBRYO], np) == -1)
+    panic("\nFailed to remove from EMBYO on succesful fork\n");
+  assertState(np, EMBRYO, __FUNCTION__, __LINE__);
 #endif
-np->state = RUNNABLE;
+  np->state = RUNNABLE;
 #ifdef CS333_P3
-stateListAdd(&ptable.list[RUNNABLE], np);
-assertState(np, RUNNABLE, __FUNCTION__, __LINE__);  //to ensure that the state is RUNNABLE
+  stateListAdd(&ptable.list[RUNNABLE], np);
+  assertState(np, RUNNABLE, __FUNCTION__, __LINE__);  //to ensure that the state is RUNNABLE
 #endif
-release(&ptable.lock);
+  release(&ptable.lock);
 
-return pid;
+  return pid;
 }
 
 // Exit the current process.  Does not return.
@@ -328,104 +330,101 @@ return pid;
 void
 exit(void)
 {
-struct proc *curproc = myproc();
-struct proc *p;
-int fd;
+  struct proc *curproc = myproc();
+  struct proc *p;
+  int fd;
 
-if(curproc == initproc)
-panic("init exiting");
+  if(curproc == initproc)
+    panic("init exiting");
 
-// Close all open files.
-for(fd = 0; fd < NOFILE; fd++){
-if(curproc->ofile[fd]){
-  fileclose(curproc->ofile[fd]);
-  curproc->ofile[fd] = 0;
-}
-}
-
-begin_op();
-iput(curproc->cwd);
-end_op();
-curproc->cwd = 0;
-
-acquire(&ptable.lock);
-
-// Parent might be sleeping in wait().
-wakeup1(curproc->parent);
-
-// Pass abandoned children to init.
-//for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-for(int i = 0; i <= NELEM(states); i++){
-p = ptable.list[i].head;
-while(p)
-{
-  if(p->parent == curproc){
-    p->parent = initproc;
-    if(p->state == ZOMBIE)
-      wakeup1(initproc);
+  // Close all open files.
+  for(fd = 0; fd < NOFILE; fd++){
+    if(curproc->ofile[fd]){
+      fileclose(curproc->ofile[fd]);
+      curproc->ofile[fd] = 0;
+    }
   }
-  p = p->next;
-}
-}
 
-// Jump into the scheduler, never to return.
-stateListRemove(&ptable.list[RUNNING], curproc);
-assertState(curproc, RUNNING, __FUNCTION__, __LINE__);
-curproc->state = ZOMBIE;
-stateListAdd(&ptable.list[ZOMBIE], curproc);
+  begin_op();
+  iput(curproc->cwd);
+  end_op();
+  curproc->cwd = 0;
+
+  acquire(&ptable.lock);
+
+  // Parent might be sleeping in wait().
+  wakeup1(curproc->parent);
+
+  // Pass abandoned children to init.
+  for(int i = 0; i < NELEM(states); i++){
+    p = ptable.list[i].head;
+    while(p){
+      if(p->parent == curproc){
+        p->parent = initproc;
+        if(p->state == ZOMBIE)
+          wakeup1(initproc);
+      }
+      p = p->next;
+    }
+  }
+
+  // Jump into the scheduler, never to return.
+  stateListRemove(&ptable.list[RUNNING], curproc);
+  assertState(curproc, RUNNING, __FUNCTION__, __LINE__);
+  curproc->state = ZOMBIE;
+  stateListAdd(&ptable.list[ZOMBIE], curproc);
 #ifdef PDX_XV6
-curproc->sz = 0;
+  curproc->sz = 0;
 #endif // PDX_XV6
-sched();
-panic("zombie exit");
+  sched();
+  panic("zombie exit");
 }
 #else	//CS333_P1,P2
-void
+  void
 exit(void)
 {
-struct proc *curproc = myproc();
-struct proc *p;
-int fd;
+  struct proc *curproc = myproc();
+  struct proc *p;
+  int fd;
 
-if(curproc == initproc)
-panic("init exiting");
+  if(curproc == initproc)
+    panic("init exiting");
 
-// Close all open files.
-for(fd = 0; fd < NOFILE; fd++){
-if(curproc->ofile[fd]){
-  fileclose(curproc->ofile[fd]);
-  curproc->ofile[fd] = 0;
+  // Close all open files.
+  for(fd = 0; fd < NOFILE; fd++){
+    if(curproc->ofile[fd]){
+      fileclose(curproc->ofile[fd]);
+      curproc->ofile[fd] = 0;
+    }
   }
-}
 
-begin_op();
-iput(curproc->cwd);
-end_op();
-curproc->cwd = 0;
+  begin_op();
+  iput(curproc->cwd);
+  end_op();
+  curproc->cwd = 0;
 
-acquire(&ptable.lock);
+  acquire(&ptable.lock);
 
-// Parent might be sleeping in wait().
-wakeup1(curproc->parent);
+  // Parent might be sleeping in wait().
+  wakeup1(curproc->parent);
 
-// Pass abandoned children to init.
-for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-if(p->parent == curproc){
-  p->parent = initproc;
-  if(p->state == ZOMBIE)
-    wakeup1(initproc);
-}
-}
+  // Pass abandoned children to init.
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->parent == curproc){
+      p->parent = initproc;
+      if(p->state == ZOMBIE)
+        wakeup1(initproc);
+    }
+  }
 
-// Jump into the scheduler, never to return.
-curproc->state = ZOMBIE;
+  // Jump into the scheduler, never to return.
+  curproc->state = ZOMBIE;
 #ifdef PDX_XV6
-curproc->sz = 0;
+  curproc->sz = 0;
 #endif // PDX_XV6
-sched();
-panic("zombie exit");
+  sched();
+  panic("zombie exit");
 }
-
 #endif	//CS333_P3
 
 // Wait for a child process to exit and return its pid.
@@ -433,50 +432,54 @@ panic("zombie exit");
 #ifdef CS333_P3
 int
 wait(void){
-struct proc *p;
-int havekids;
-uint pid;
-struct proc *curproc = myproc();
+  struct proc *p;
+  int havekids;
+  uint pid;
+  struct proc *curproc = myproc();
 
-acquire(&ptable.lock);
-for(;;){
-// Scan through table looking for exited children.
-havekids = 0;
-//for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-for(int i = 1; i <= NELEM(states); i++){
-  p = ptable.list[i].head;
-  if(p->parent != curproc)
-    continue;
-  havekids = 1;
-  if(p->state == ZOMBIE){
-    // Found one.
-    pid = p->pid;
-    kfree(p->kstack);
-    p->kstack = 0;
-    freevm(p->pgdir);
-    p->pid = 0;
-    p->parent = 0;
-    p->name[0] = 0;
-    p->killed = 0;
-    stateListRemove(&ptable.list[ZOMBIE], p);
-    assertState(p, ZOMBIE, __FUNCTION__, __LINE__);
-    p->state = UNUSED;
-    stateListAdd(&ptable.list[UNUSED], p);
-    release(&ptable.lock);
-    return pid;
-  }
-
-  // No point waiting if we don't have any children.
-  if(!havekids || curproc->killed){
-    release(&ptable.lock);
-    return -1;
-  }
-
-  // Wait for children to exit.  (See wakeup1 call in proc_exit.)
-  sleep(curproc, &ptable.lock);  //DOC: wait-sleep
+  acquire(&ptable.lock);
+  for(;;){
+    // Scan through table looking for exited children.
+    havekids = 0;
+    for(int i = UNUSED+1; i < NELEM(states); i++){
+      p = ptable.list[i].head;
+      while(p){
+        if(p->parent != curproc){
+          p = p->next;
+          continue;
+        }
+        havekids = 1;
+        if(p->state == ZOMBIE){
+          // Found one.
+          pid = p->pid;
+          kfree(p->kstack);
+          p->kstack = 0;
+          freevm(p->pgdir);
+          p->pid = 0;
+          p->parent = 0;
+          p->name[0] = 0;
+          p->killed = 0;
+          if(stateListRemove(&ptable.list[ZOMBIE], p) == -1)
+            panic("\nFailed to remove from ZOMBIE list in wait()\n");
+          assertState(p, ZOMBIE, __FUNCTION__, __LINE__);
+          p->state = UNUSED;
+          stateListAdd(&ptable.list[UNUSED], p);
+          release(&ptable.lock);
+          return pid;
+        }
+        p = p->next;
+      }
     }
+    // No point waiting if we don't have any children.
+    if(!havekids || curproc->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(curproc, &ptable.lock);  //DOC: wait-sleep
   }
 }
+
 #else	//CS333_P1,P2
 int
 wait(void)
@@ -552,18 +555,10 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     p = ptable.list[RUNNABLE].head;   //points to head,
-                                      //or first proc in the list
-                                      //as it follow FIFO
-                                      //check for a valid process
+    //or first proc in the list
+    //as it follow FIFO
+    //check for a valid process
     if(p){
-      assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
-
-      #ifdef PDX_XV6
-      idle = 0;  // not idle this timeslice
-      #endif // PDX_XV6
-      c->proc = p;
-      switchuvm(p);
-
       //remove from the RUNNABLE list
       if(stateListRemove(&ptable.list[RUNNABLE], p) == -1)
         panic("\nFailed to remove process we will run from RUNNABLE in scheduler()\n");
@@ -572,7 +567,11 @@ scheduler(void)
       //and add to the RUNNING list
       p->state = RUNNING;
       stateListAdd(&ptable.list[RUNNING], p); //void return type, ALWAYS SUCCEEDS
-      assertState(p, RUNNING, __FUNCTION__, __LINE__);  //since HAS to be running
+#ifdef PDX_XV6
+      idle = 0;  // not idle this timeslice
+#endif // PDX_XV6
+      c->proc = p;
+      switchuvm(p);
 
       p->cpu_ticks_in = ticks;
       swtch(&(c->scheduler), p->context);
@@ -593,7 +592,7 @@ scheduler(void)
   }
 }
 #else	//CS333_P1,P2
-void
+  void
 scheduler(void)
 {
   struct proc *p;
@@ -653,7 +652,7 @@ scheduler(void)
 // be proc->intena and proc->ncli, but that would
 // break in the few places where a lock is held but
 // there's no process.
-void
+  void
 sched(void)
 {
   int intena;
@@ -814,12 +813,15 @@ wakeup1(void *chan)
   while(p){
     if(p->chan == chan) //make sure p is in the same channel
     {
+      struct proc *temp = p->next;  //to make sure to hang onto the next proc.
       stateListRemove(&ptable.list[SLEEPING], p);
       assertState(p, SLEEPING, __FUNCTION__, __LINE__);
       p->state = RUNNABLE;
       stateListAdd(&ptable.list[RUNNABLE], p);
+      p = temp;
     }
-    p = p->next; //go to the next process
+    else
+      p = p->next; //go to the next process
   }
 }
 #else	//CS333_P1,P2
@@ -851,6 +853,7 @@ wakeup(void *chan)
 int
 kill(int pid){
   struct proc *p;
+  struct proc *temp;
 
   acquire(&ptable.lock);
   for(int i = 1; i <= NELEM(states); i++){
@@ -860,6 +863,7 @@ kill(int pid){
         p->killed = 1;
         // Wake process from sleep if necessary.
         if(p->state == SLEEPING){
+          temp = p->next; //to hold the next SLEEPING;
           stateListRemove(&ptable.list[SLEEPING], p);
           assertState(p, SLEEPING, __FUNCTION__, __LINE__);
           p->state = RUNNABLE;
@@ -867,6 +871,7 @@ kill(int pid){
           //that we need to wake up?
           //If we remove p from the sleeping list, what does p->next become?
           stateListAdd(&ptable.list[RUNNABLE], p);
+          p = temp; //return p to the next item in the SLEEPING list
         }
         release(&ptable.lock);
         return 0;
@@ -878,7 +883,7 @@ kill(int pid){
   return -1;
 }
 #else	//CS333_P1,P2
-int
+  int
 kill(int pid)
 {
   struct proc *p;
@@ -904,7 +909,7 @@ kill(int pid)
 // Runs when user types ^P on console.
 // No lock to avoid wedging a stuck machine further.
 
-#if defined(CS333_P2)
+#ifdef CS333_P3
 void
 procdumpP2P3P4(struct proc *p, char *state_string)
 {
@@ -944,16 +949,16 @@ procdumpP2P3P4(struct proc *p, char *state_string)
   if(cpu_milliseconds >= 100)
     cprintf(".%d\t", cpu_milliseconds);
   else if(cpu_milliseconds < 100 || cpu_milliseconds >= 10)
-    cprintf(".%d0\t", cpu_milliseconds);
+    cprintf(".0%d\t", cpu_milliseconds);
   else if(cpu_milliseconds < 10)
-    cprintf(".%d00\t", cpu_milliseconds);
+    cprintf(".00%d\t", cpu_milliseconds);
 
   cprintf("%s\t%d\t", states[p->state], p->sz);
 
   return;
 }
 #elif defined(CS333_P1)
-void
+  void
 procdumpP1(struct proc *p, char *state_string)
 {
   uint elapsed = ticks - p->start_ticks;
@@ -966,7 +971,7 @@ procdumpP1(struct proc *p, char *state_string)
 }
 #endif
 
-void
+  void
 procdump(void)
 {
   int i;
@@ -1018,7 +1023,7 @@ procdump(void)
 
 #if defined(CS333_P3)
 // list management helper functions
-static void
+  static void
 stateListAdd(struct ptrs* list, struct proc* p)
 {
   if((*list).head == NULL){
@@ -1034,7 +1039,7 @@ stateListAdd(struct ptrs* list, struct proc* p)
 #endif
 
 #if defined(CS333_P3)
-static int
+  static int
 stateListRemove(struct ptrs* list, struct proc* p)
 {
   if((*list).head == NULL || (*list).tail == NULL || p == NULL){
@@ -1084,7 +1089,7 @@ stateListRemove(struct ptrs* list, struct proc* p)
 #endif
 
 #if defined(CS333_P3)
-static void
+  static void
 initProcessLists()
 {
   int i;
@@ -1103,7 +1108,7 @@ initProcessLists()
 #endif
 
 #if defined(CS333_P3)
-static void
+  static void
 initFreeList(void)
 {
   struct proc* p;
@@ -1120,7 +1125,7 @@ initFreeList(void)
 // assertState(p, UNUSED, __FUNCTION__, __LINE__);
 // This code uses gcc preprocessor directives. For details, see
 // https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
-static void
+  static void
 assertState(struct proc *p, enum procstate state, const char * func, int line)
 {
   if (p->state == state)
@@ -1133,7 +1138,7 @@ assertState(struct proc *p, enum procstate state, const char * func, int line)
 
 #if defined(CS333_P3)
 // Project 3/4 control sequence support
-void
+  void
 printList(int state)
 {
   int count = 0;
@@ -1190,7 +1195,7 @@ printList(int state)
   return;
 }
 
-void
+  void
 printFreeList(void)
 {
   int count = 0;
@@ -1208,7 +1213,7 @@ printFreeList(void)
   return;
 }
 
-void
+  void
 printListStats()
 {
   int i, count, total = 0;
@@ -1240,7 +1245,7 @@ printListStats()
 #endif // CS333_P3
 
 #ifdef CS333_P4
-void
+  void
 printReadyList(struct proc *p, int prio)
 {
   if (p == NULL) {
@@ -1261,7 +1266,7 @@ printReadyList(struct proc *p, int prio)
   } while (p != NULL);
 }
 
-void
+  void
 printReadyLists()
 {
   struct proc *p;
@@ -1283,7 +1288,7 @@ printReadyLists()
 
 
 #ifdef CS333_P2
-int
+  int
 getstheprocs(uint max, struct uproc* table)
 {
   uint procs_copied = 0;
