@@ -380,7 +380,7 @@ fork(void)
 // An exited process remains in the zombie state
 // until its parent calls wait() to find out it exited.
 #ifdef CS333_P3
-  void
+void
 exit(void)
 {
   struct proc *curproc = myproc();
