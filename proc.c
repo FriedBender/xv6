@@ -113,6 +113,7 @@ myproc(void) {
 // If found, change state to EMBRYO and initialize
 // state required to run in the kernel.
 // Otherwise return 0.
+#ifdef CS333_P3
 static struct proc*
 allocproc(void)
 {
@@ -181,9 +182,61 @@ allocproc(void)
   return p;
 }
 
+#else
+static struct proc*
+allocproc(void)
+{
+  struct proc *p;
+  char *sp;
+
+  acquire(&ptable.lock);
+  int found = 0;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    if(p->state == UNUSED) {
+      found = 1;
+      break;
+    }
+  if (!found) {
+    release(&ptable.lock);
+    return 0;
+  }
+  p->state = EMBRYO;
+  p->pid = nextpid++;
+  release(&ptable.lock);
+
+  // Allocate kernel stack.
+  if((p->kstack = kalloc()) == 0){
+    p->state = UNUSED;
+    return 0;
+  }
+  sp = p->kstack + KSTACKSIZE;
+
+  // Leave room for trap frame.
+  sp -= sizeof *p->tf;
+  p->tf = (struct trapframe*)sp;
+
+  // Set up new context to start executing at forkret,
+  // which returns to trapret.
+  sp -= 4;
+  *(uint*)sp = (uint)trapret;
+
+  sp -= sizeof *p->context;
+  p->context = (struct context*)sp;
+  memset(p->context, 0, sizeof *p->context);
+  p->context->eip = (uint)forkret;
+
+  //To initialize the start_ticks
+  p->start_ticks = ticks;
+  p->cpu_ticks_total = 0;
+  p->cpu_ticks_in = 0;
+
+  return p;
+}
+#endif
+
 //PAGEBREAK: 32
 // Set up first user process.
-void
+  void
 userinit(void)
 {
   struct proc *p;
@@ -256,7 +309,7 @@ growproc(int n)
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
-int
+  int
 fork(void)
 {
   int i;
@@ -327,7 +380,7 @@ fork(void)
 // An exited process remains in the zombie state
 // until its parent calls wait() to find out it exited.
 #ifdef CS333_P3
-void
+  void
 exit(void)
 {
   struct proc *curproc = myproc();
@@ -380,7 +433,7 @@ exit(void)
   panic("zombie exit");
 }
 #else	//CS333_P1,P2
-void
+  void
 exit(void)
 {
   struct proc *curproc = myproc();
@@ -481,7 +534,7 @@ wait(void){
 }
 
 #else	//CS333_P1,P2
-int
+  int
 wait(void)
 {
   struct proc *p;
@@ -534,7 +587,7 @@ wait(void)
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 #ifdef CS333_P3
-void
+  void
 scheduler(void)
 {
   struct proc *p;
@@ -674,7 +727,7 @@ sched(void)
 
 // Give up the CPU for one scheduling round.
 #ifdef CS333_P3
-void
+  void
 yield(void)
 {
   struct proc *curproc = myproc();
@@ -689,7 +742,7 @@ yield(void)
   release(&ptable.lock);
 }
 #else	//CS333_P1,P2
-void
+  void
 yield(void)
 {
   struct proc *curproc = myproc();
@@ -703,7 +756,7 @@ yield(void)
 
 // A fork child's very first scheduling by scheduler()
 // will swtch here.  "Return" to user space.
-void
+  void
 forkret(void)
 {
   static int first = 1;
@@ -725,7 +778,7 @@ forkret(void)
 // Atomically release lock and sleep on chan.
 // Reacquires lock when awakened.
 #ifdef CS333_P3
-void
+  void
 sleep(void *chan, struct spinlock *lk)
 {
   struct proc *p = myproc();
@@ -766,7 +819,7 @@ sleep(void *chan, struct spinlock *lk)
   }
 }
 #else	//CS333_P1,P2
-void
+  void
 sleep(void *chan, struct spinlock *lk)
 {
   struct proc *p = myproc();
@@ -805,7 +858,7 @@ sleep(void *chan, struct spinlock *lk)
 // Wake up all processes sleeping on chan.
 // The ptable lock must be held.
 #ifdef CS333_P3
-static void
+  static void
 wakeup1(void *chan)
 {
   struct proc *p;
@@ -825,7 +878,7 @@ wakeup1(void *chan)
   }
 }
 #else	//CS333_P1,P2
-static void
+  static void
 wakeup1(void *chan)
 {
   struct proc *p;
@@ -838,7 +891,7 @@ wakeup1(void *chan)
 
 
 // Wake up all processes sleeping on chan.
-void
+  void
 wakeup(void *chan)
 {
   acquire(&ptable.lock);
@@ -910,7 +963,7 @@ kill(int pid)
 // No lock to avoid wedging a stuck machine further.
 
 #ifdef CS333_P3
-void
+  void
 procdumpP2P3P4(struct proc *p, char *state_string)
 {
   int i;
