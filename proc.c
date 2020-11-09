@@ -856,7 +856,7 @@ kill(int pid){
   struct proc *temp;
 
   acquire(&ptable.lock);
-  for(int i = 1; i <= NELEM(states); i++){
+  for(int i = 1; i < NELEM(states); i++){
     p = ptable.list[i].head;
     while(p){
       if(p->pid == pid){
