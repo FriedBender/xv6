@@ -113,7 +113,7 @@ myproc(void) {
 // If found, change state to EMBRYO and initialize
 // state required to run in the kernel.
 // Otherwise return 0.
-  static struct proc*
+static struct proc*
 allocproc(void)
 {
   struct proc *p;
@@ -256,7 +256,7 @@ growproc(int n)
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
-  int
+int
 fork(void)
 {
   int i;
@@ -380,7 +380,7 @@ exit(void)
   panic("zombie exit");
 }
 #else	//CS333_P1,P2
-  void
+void
 exit(void)
 {
   struct proc *curproc = myproc();
