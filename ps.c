@@ -32,19 +32,37 @@ main(int argc, char* argv[])
       printf(1, " ");
     }
 
-    printf(1,"%d\t%d\t%d\t%d.%d\t%d.%d\t%s\t%d\t\n",
-            table[i].uid, 
-            table[i].gid,
-            table[i].ppid, 
-            table[i].elapsed_ticks/1000,
-            table[i].elapsed_ticks%1000, 
-            table[i].CPU_total_ticks/1000, 
-            table[i].CPU_total_ticks%1000, 
-            table[i].state,
-            table[i].size
-          );
+    uint milliseconds = table[i].elapsed_ticks%1000;
+    uint cpu_milliseconds = table[i].CPU_total_ticks%1000;
+
+    printf(1,"%d\t%d\t%d\t%d",
+        table[i].uid, 
+        table[i].gid,
+        table[i].ppid, 
+        table[i].elapsed_ticks/1000
+        );
+
+    if(milliseconds >= 100)
+      printf(1,".%d\t", milliseconds);
+    else if(milliseconds < 100 || milliseconds >= 10)
+      printf(1,".%d0\t", milliseconds);
+    else if(milliseconds < 10)
+      printf(1,".%d00\t", milliseconds);
+
+    printf(1,"%d",table[i].CPU_total_ticks/1000);
+    if(cpu_milliseconds >= 100)
+      printf(1,".%d\t", cpu_milliseconds);
+    else if(cpu_milliseconds < 100 || cpu_milliseconds >= 10)
+      printf(1, ".0%d\t", cpu_milliseconds);
+    else if(cpu_milliseconds < 10)
+      printf(1,".00%d\t", cpu_milliseconds);
+
+    printf(1,"%s\t%d\n",
+        table[i].state,
+        table[i].size
+        );
   }
-  
+
   exit();
 }
 
