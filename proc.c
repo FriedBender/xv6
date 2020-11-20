@@ -40,6 +40,10 @@ static struct {
 #ifdef CS333_P3
   struct ptrs list[statecount];
 #endif
+#ifdef CS333_P4
+  sruct ptrs ready[MAXPRIO+1]; //for holding a list of ready processes
+  uint PromoteAtTime;          //for promoting at a certain value
+#endif  //CS333_P4
 } ptable;
 
 // list management function prototypes

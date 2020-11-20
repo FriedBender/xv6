@@ -166,6 +166,8 @@ int             fetchint(uint, int*);
 int             fetchstr(uint, char**);
 void            syscall(void);
 int             getstheprocs(uint max, struct uproc* table);
+int             setpriority(int pid, int priority);
+int             getpriority(int pid);
 
 // timer.c
 void            timerinit(void);

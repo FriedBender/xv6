@@ -180,3 +180,17 @@ sys_getprocs(void)
   return getstheprocs( max , table);
 }
 #endif	//CS333_P2
+
+#ifdef CS333_P4
+int
+sys_setpriority(int pid, int priority)
+{
+  return -1;  //default place holder value
+}
+
+int
+sys_getpriority(int pid)
+{
+  return -1;  //default place holder value
+}
+#endif  //CS333_P4
