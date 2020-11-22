@@ -62,5 +62,5 @@ int getprocs(uint max, struct uproc* table);  //For the ps command for CS333 Pro
 
 #ifdef CS333_P4
 int setpriority(int pid, int priority);
-int setpriority(int pid);
+int getpriority(int pid);
 #endif  //CS333_P4

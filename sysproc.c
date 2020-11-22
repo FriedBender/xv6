@@ -185,6 +185,12 @@ sys_getprocs(void)
 int
 sys_setpriority(int pid, int priority)
 {
+  int pid;
+  int priority;
+  if(argint(0, &pid) == -1)
+    return -1;
+  if(argint(1, &priority) == -1)
+    return -1;
   return -1;  //default place holder value
 }
 
