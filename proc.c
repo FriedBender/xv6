@@ -313,7 +313,7 @@ growproc(int n)
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
-  int
+int
 fork(void)
 {
   int i;
@@ -1383,11 +1383,51 @@ getstheprocs(uint max, struct uproc* table)
 int
 setpriority(int pid, int priority)
 {
+  if(priority < 0 || priority > MAXPRIO+1)
+    return -1;
+  if(pid <= 0)
+    return -1;
+  acquire(&ptable.lock);
+  struct proc *curr;
+  for(int i = SLEEPING; i <= RUNNING; ++i)
+  {
+    curr = ptable.list[i].head;
+    while(curr)
+    {
+      if(curr->pid == pid)
+      {
+        curr->priority = priority;
+        curr->budget = DEFAULT_BUDGET;
+        release(&ptable.lock);
+        return 0;
+      }
+      curr = curr->next;
+    }
+  }
   return -1;
 }
 
 int getpriority(int pid)
 {
+  if(pid <= 0)
+    return -1;
+
+  acquire(&ptable.lock);
+  struct proc *curr;
+  for(int i = 0; i < NELEM(states); i++)
+  {
+    curr = ptable.list[i].head;
+    while(curr)
+    {
+      if(curr->pid == pid)
+      {
+        if(curr->state == UNUSED)
+          return -1;
+        return curr->priority;
+      }
+      curr = curr->next;
+    }
+  }
   return -1;
 }
 #endif  //CS333_P4
