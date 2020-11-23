@@ -42,7 +42,7 @@ static struct {
 #endif
 #ifdef CS333_P4
   struct ptrs ready[MAXPRIO+1]; //for holding a list of ready processes in my case 5+1
-  uint PromoteAtTime;          //for promoting at a certain value
+  uint PromoteAtTime;          //for promoting at a certain tick value
 #endif  //CS333_P4
 } ptable;
 
@@ -240,9 +240,10 @@ allocproc(void)
 
 //PAGEBREAK: 32
 // Set up first user process.
-  void
+void
 userinit(void)
 {
+  ptable.PromoteAtTime = ticks + TICKS_TO_PROMOTE;
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
 #ifdef CS333_P3
@@ -591,7 +592,7 @@ wait(void)
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 #ifdef CS333_P3
-  void
+void
 scheduler(void)
 {
   struct proc *p;
@@ -611,6 +612,12 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+
+    if(ticks >= ptable.PromoteAtTime)
+    {
+      ptable.PromoteAtTime = ticks + TICKS_TO_PROMOTE;
+      promoteProcs();
+    }
     p = ptable.list[RUNNABLE].head;   //points to head,
     //or first proc in the list
     //as it follow FIFO
@@ -1080,7 +1087,7 @@ procdump(void)
 
 #if defined(CS333_P3)
 // list management helper functions
-  static void
+static void
 stateListAdd(struct ptrs* list, struct proc* p)
 {
   if((*list).head == NULL){
@@ -1096,7 +1103,7 @@ stateListAdd(struct ptrs* list, struct proc* p)
 #endif
 
 #if defined(CS333_P3)
-  static int
+static int
 stateListRemove(struct ptrs* list, struct proc* p)
 {
   if((*list).head == NULL || (*list).tail == NULL || p == NULL){
@@ -1146,7 +1153,7 @@ stateListRemove(struct ptrs* list, struct proc* p)
 #endif
 
 #if defined(CS333_P3)
-  static void
+static void
 initProcessLists()
 {
   int i;
@@ -1429,5 +1436,33 @@ int getpriority(int pid)
     }
   }
   return -1;
+}
+
+void
+promoteProcs()
+{
+  acquire(&ptable.lock);
+  struct proc *curr;
+  for(int i = EMBRYO; i < ZOMBIE; i++)
+  {
+    curr = ptable.list[i].head;
+    while(curr)
+    {
+      if(curr->priority < MAXPRIO)
+      {
+        curr->priority++;
+        curr->budget = DEFAULT_BUDGET;
+        if(curr->state == RUNNABLE)
+        {
+          if(stateListRemove(&ptable.list[RUNNABLE], curr) == -1)
+            panic("\nFailed to remove from RUNNING list in promteProcs()\n");
+          assertState(curr, RUNNABLE, __FUNCTION__, __LINE__);
+          stateListAdd(&ptable.list[RUNNABLE], curr);
+        }
+      }
+      curr = curr->next;
+    }
+  }
+  release(&ptable.lock);
 }
 #endif  //CS333_P4
