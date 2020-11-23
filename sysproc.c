@@ -183,7 +183,7 @@ sys_getprocs(void)
 
 #ifdef CS333_P4
 int
-sys_setpriority(int pid, int priority)
+sys_setpriority(void)
 {
   int pid;
   int priority;
@@ -191,12 +191,16 @@ sys_setpriority(int pid, int priority)
     return -1;
   if(argint(1, &priority) == -1)
     return -1;
-  return -1;  //default place holder value
+  return setpriority(pid, priority);  //goes into kernel mode to find the pid,
+                                  // and set priority for that pid.
 }
 
 int
-sys_getpriority(int pid)
+sys_getpriority(void)
 {
-  return -1;  //default place holder value
+  int pid;
+  if(argint(0, &pid) == -1)
+    return -1;
+  return getpriority(pid);
 }
 #endif  //CS333_P4

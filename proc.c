@@ -41,7 +41,7 @@ static struct {
   struct ptrs list[statecount];
 #endif
 #ifdef CS333_P4
-  sruct ptrs ready[MAXPRIO+1]; //for holding a list of ready processes
+  struct ptrs ready[MAXPRIO+1]; //for holding a list of ready processes in my case 5+1
   uint PromoteAtTime;          //for promoting at a certain value
 #endif  //CS333_P4
 } ptable;
@@ -1195,12 +1195,12 @@ assertState(struct proc *p, enum procstate state, const char * func, int line)
 
 #if defined(CS333_P3)
 // Project 3/4 control sequence support
-  void
+void
 printList(int state)
 {
   int count = 0;
-  const int PER_LINE = 15;  // per line max on print
-  const int PER_LINE_Z = (PER_LINE/2);  // zombie list has more chars per entry on print
+  //const int PER_LINE = 15;  // per line max on print
+  //const int PER_LINE_Z = (PER_LINE/2);  // zombie list has more chars per entry on print
   struct proc *p;
   static char *stateNames[] = {  // note: sparse array
     [RUNNABLE]  "Runnable",
@@ -1323,7 +1323,7 @@ printReadyList(struct proc *p, int prio)
   } while (p != NULL);
 }
 
-  void
+void
 printReadyLists()
 {
   struct proc *p;
@@ -1335,7 +1335,7 @@ printReadyLists()
     cprintf("Prio %d: ", i);
     if(p->state != RUNNABLE) {
       cprintf("\nlist invariant failed: process %d has state %s but is on ready list\n",
-          p->pid, states[p-state]);
+          p->pid, states[p->state]);
     }
     printReadyList(p, i);
   }
@@ -1345,7 +1345,7 @@ printReadyLists()
 
 
 #ifdef CS333_P2
-  int
+int
 getstheprocs(uint max, struct uproc* table)
 {
   uint procs_copied = 0;
@@ -1378,3 +1378,16 @@ getstheprocs(uint max, struct uproc* table)
   return procs_copied; 
 }
 #endif  //CS333_P2
+
+#ifdef CS333_P4
+int
+setpriority(int pid, int priority)
+{
+  return -1;
+}
+
+int getpriority(int pid)
+{
+  return -1;
+}
+#endif  //CS333_P4
