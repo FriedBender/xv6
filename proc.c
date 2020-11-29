@@ -253,7 +253,10 @@ userinit(void)
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
 #ifdef CS333_P4
-
+  for(int i = MAXPRIO; i <= PRIO_MIN; i--)
+  {
+    ptable.ready[i].head = NULL;
+  }
 #endif
 #ifdef CS333_P3
   acquire(&ptable.lock);
@@ -396,7 +399,61 @@ fork(void)
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
 // until its parent calls wait() to find out it exited.
-#ifdef CS333_P3
+#ifdef CS333_P4
+void
+exit(void)
+{
+  struct proc *curproc = myproc();
+  struct proc *p;
+  int fd;
+
+  if(curproc == initproc)
+    panic("init exiting");
+
+  // Close all open files.
+  for(fd = 0; fd < NOFILE; fd++){
+    if(curproc->ofile[fd]){
+      fileclose(curproc->ofile[fd]);
+      curproc->ofile[fd] = 0;
+    }
+  }
+
+  begin_op();
+  iput(curproc->cwd);
+  end_op();
+  curproc->cwd = 0;
+
+  acquire(&ptable.lock);
+
+  // Parent might be sleeping in wait().
+  wakeup1(curproc->parent);
+
+  // Pass abandoned children to init.
+  for(int i = 0; i < NELEM(states); i++){
+    p = ptable.list[i].head;
+    while(p){
+      if(p->parent == curproc){
+        p->parent = initproc;
+        if(p->state == ZOMBIE)
+          wakeup1(initproc);
+      }
+      p = p->next;
+    }
+  }
+
+  // Jump into the scheduler, never to return.
+  stateListRemove(&ptable.list[RUNNING], curproc);
+  assertState(curproc, RUNNING, __FUNCTION__, __LINE__);
+  curproc->state = ZOMBIE;
+  stateListAdd(&ptable.list[ZOMBIE], curproc);
+#ifdef PDX_XV6
+  curproc->sz = 0;
+#endif // PDX_XV6
+  sched();
+  panic("zombie exit");
+}
+
+#elif CS333_P3
 void
 exit(void)
 {
@@ -499,7 +556,7 @@ exit(void)
 
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
-#ifdef CS333_P3
+#if defined (CS333_P3) || (CS333_P4)
 int
 wait(void){
   struct proc *p;
@@ -643,10 +700,11 @@ scheduler(void)
       //TODO having trouble figuring this guy out and remove
       cprintf("\n THE VALUE OF P priority%d\n", p->priority);
       cprintf("\n THE VALUE OF P %d\n", &ptable.ready[0]);
-
-      //if(stateListRemove(&ptable.ready[p->priority], p) == -1)
-        //panic("\nFailed to remove process we will run from RUNNABLE in scheduler()\n");
-      //assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
+      
+      //error here!
+      if(stateListRemove(&ptable.ready[p->priority], p) == -1)
+        panic("\nFailed to remove process we will run from RUNNABLE in scheduler()\n");
+      assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
 
       //and add to the RUNNING list
 #ifdef PDX_XV6
