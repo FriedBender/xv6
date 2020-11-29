@@ -629,6 +629,9 @@ scheduler(void)
       if(ptable.ready[i].head)
       {
         p = ptable.ready[i].head;   //points to head,
+        if(stateListRemove(&ptable.ready[p->priority], p) == -1)
+          panic("\nFailed to remove from the ready list in scheduler()\n");
+        assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
         break;
       }
     }
@@ -641,18 +644,18 @@ scheduler(void)
       cprintf("\n THE VALUE OF P priority%d\n", p->priority);
       cprintf("\n THE VALUE OF P %d\n", &ptable.ready[0]);
 
-      if(stateListRemove(&ptable.ready[p->priority], p) == -1)
-        panic("\nFailed to remove process we will run from RUNNABLE in scheduler()\n");
-      assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
+      //if(stateListRemove(&ptable.ready[p->priority], p) == -1)
+        //panic("\nFailed to remove process we will run from RUNNABLE in scheduler()\n");
+      //assertState(p, RUNNABLE, __FUNCTION__, __LINE__);
 
       //and add to the RUNNING list
-      p->state = RUNNING;
-      stateListAdd(&ptable.list[RUNNING], p); //void return type, ALWAYS SUCCEEDS
 #ifdef PDX_XV6
       idle = 0;  // not idle this timeslice
 #endif // PDX_XV6
       c->proc = p;
       switchuvm(p);
+      p->state = RUNNING;
+      stateListAdd(&ptable.list[RUNNING], p); //void return type, ALWAYS SUCCEEDS
 
       p->cpu_ticks_in = ticks;
       swtch(&(c->scheduler), p->context);
