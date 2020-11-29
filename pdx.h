@@ -27,11 +27,9 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
-#define MAXPRIO 5
+#define MAXPRIO 0
 #define PRIO_MIN 0
 #define PRIO_MAX MAXPRIO
 #define DEFAULT_BUDGET 100
 #define TICKS_TO_PROMOTE 1000
-#define PER_LINE  15
-#define PER_LINE_Z (PER_LINE/2)
 #endif  // PDX_INCLUDE
