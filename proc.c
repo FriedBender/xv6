@@ -1186,7 +1186,7 @@ kill(int pid){
     }
   }
 
-  for(int i = MAXPRIO; i <= PRIO_MIN; i--)
+  for(int i = MAXPRIO; i >= PRIO_MIN; i--)
   {
     p = ptable.ready[i].head;
     while(p){
