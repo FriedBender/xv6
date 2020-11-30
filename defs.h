@@ -130,6 +130,9 @@ void            printFreeList(void);
 void            printList(int);
 void            printListStats(void);
 #endif // CS333_P3
+#ifdef CS333_P4
+void            promoteProcs(void);
+#endif  //CS333_P4
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -166,6 +169,8 @@ int             fetchint(uint, int*);
 int             fetchstr(uint, char**);
 void            syscall(void);
 int             getstheprocs(uint max, struct uproc* table);
+int             setpriority(int pid, int priority);
+int             getpriority(int pid);
 
 // timer.c
 void            timerinit(void);

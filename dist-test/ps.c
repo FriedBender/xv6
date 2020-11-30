@@ -15,7 +15,7 @@ main(int argc, char* argv[])
 
   if(active_processes < 0)
     printf(2, "There are no processes to display.");
-  printf(1,"\nPID\tName\tUID\tGID\tPPID\tElapsed\tCPU\tState\tSize\t\n");
+  printf(1,"\nPID\tName\tUID\tGID\tPPID\tPrio\tElapsed\tCPU\tState\tSize\t\n");
   for(int i = 0 ; i < active_processes ; ++i)
   {
     int j = 0;
@@ -35,10 +35,11 @@ main(int argc, char* argv[])
     uint milliseconds = table[i].elapsed_ticks%1000;
     uint cpu_milliseconds = table[i].CPU_total_ticks%1000;
 
-    printf(1,"%d\t%d\t%d\t%d",
+    printf(1,"%d\t%d\t%d\t%d\t%d",
         table[i].uid, 
         table[i].gid,
         table[i].ppid, 
+        table[i].priority,
         table[i].elapsed_ticks/1000
         );
 

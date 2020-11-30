@@ -57,6 +57,10 @@ struct proc {
 #ifdef CS333_P3
   struct proc *next;           //for adding a linked list in P3
 #endif	//CS333_P3
+#ifdef CS333_P4
+  int budget;                  //The time slice
+  int priority;                //priority of process
+#endif  //CS333_P4
 };
 
 // Process memory is laid out contiguously, low addresses first:
