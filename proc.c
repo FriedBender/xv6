@@ -1730,7 +1730,7 @@ setpriority(int pid, int priority)
 
 int getpriority(int pid)
 {
-  if(pid <= 0)
+  if(pid < 0)
     return -1;
 
   acquire(&ptable.lock);
@@ -1753,7 +1753,7 @@ int getpriority(int pid)
     }
   }
   //now to check the ready lists:
-  for(int i = PRIO_MAX; i <= PRIO_MIN; --i)
+  for(int i = PRIO_MAX; i >= PRIO_MIN; --i)
   {
     curr = ptable.ready[i].head;
     while(curr)
